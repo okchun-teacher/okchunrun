@@ -17,3 +17,4 @@ BGM 출처 : 브금대통령 'BGM President'
 ## 사용한 라이브러리
 
 - three.js r128 (MIT License) — `index.html` 안에 포함
+- 주아체(Jua, SIL Open Font License) — 카운트다운·제목에 쓰는 글자만 `index.html` 안에 포함
