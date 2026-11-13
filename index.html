@@ -97,7 +97,7 @@ button{font:inherit;cursor:pointer}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #1b8449}
 .btn.sec{background:linear-gradient(#fffbe9,#ffe8b0);color:#7a4a14;text-shadow:none;box-shadow:inset 0 3px 0 #fff,0 5px 0 #e2c27d}
 .btn.pink{background:linear-gradient(#ff95b4,#ec5f86);box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 5px 0 #b93b5f}
-.btn.sm{font-size:15px;padding:7px 14px}
+.btn.sm{font-size:15px;padding:7px 14px;white-space:nowrap;flex:none}
 .ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20;background:rgba(40,30,70,.35);padding:16px}
 .ov.on{display:flex}
 .box{background:#fffaf0;border:4px solid #ecd39b;border-radius:28px;box-shadow:0 8px 0 #dcbc7c,0 20px 40px rgba(0,0,0,.25);padding:24px 28px;width:min(720px,100%);max-height:94vh;overflow:auto}
@@ -107,7 +107,7 @@ button{font:inherit;cursor:pointer}
 @media(max-width:640px){.grid{grid-template-columns:1fr}}
 label{display:block;font-weight:800;font-size:16px;margin:10px 0 4px;color:#1d8a49}
 textarea,input,select{font:inherit;font-size:17px;width:100%;border:2.5px solid #e6d09a;border-radius:14px;padding:8px 12px;background:#fffdf6;color:#3d2f1b}
-textarea{height:270px;resize:vertical}
+textarea{height:210px;resize:vertical}
 .row{display:flex;gap:8px;align-items:center}
 .row input{width:90px}
 .tip{font-size:13.5px;color:#85703f;line-height:1.6;background:#fff2c4;border:2px dashed #e9b94d;border-radius:14px;padding:8px 12px;margin-top:12px}
@@ -129,7 +129,7 @@ textarea{height:270px;resize:vertical}
 #count{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:15;font-family:'JuaMini','Jua','Malgun Gothic',sans-serif;font-size:30vh;font-weight:400;color:#ffe14a;-webkit-text-stroke:1.6vh #fff;paint-order:stroke fill;text-shadow:0 1.4vh 0 #ec5f86,0 2.6vh 0 #b93b5f,0 4vh 5vh rgba(0,0,0,.35);pointer-events:none;letter-spacing:.02em}
 #count.pop{animation:pop .7s ease}
 @keyframes pop{0%{transform:scale(.3);opacity:0}40%{transform:scale(1.2);opacity:1}100%{transform:scale(1)}}
-#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:8;background:linear-gradient(#ff95b4,#ec5f86);color:#fff;border:3px solid #fff;border-radius:999px;padding:8px 24px;font-size:20px;font-weight:800;opacity:0;transition:opacity .25s;pointer-events:none;box-shadow:0 5px 0 rgba(0,0,0,.15)}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:30;background:linear-gradient(#ff95b4,#ec5f86);color:#fff;border:3px solid #fff;border-radius:999px;padding:8px 24px;font-size:20px;font-weight:800;opacity:0;transition:opacity .25s;pointer-events:none;box-shadow:0 5px 0 rgba(0,0,0,.15)}
 #toast.on{opacity:1}
 #result .box{text-align:center;position:relative;overflow:hidden}
 #resTitle{font-size:52px;margin:0 0 10px;color:#ec5f86}
@@ -153,9 +153,12 @@ textarea{height:270px;resize:vertical}
   <h1>🍬 젤리런 추첨기</h1><p>젤리 친구들이 장애물 코스를 달려요. 먼저 골인한 순서대로 당첨! 움직임은 전부 랜덤이에요.</p>
   <div class="grid">
     <div><label>참가자 이름 <span id="ncount" style="color:#ec5f86"></span></label><textarea id="names" placeholder="한 줄에 한 명씩 (쉼표도 돼요)"></textarea>
-      <div class="row" style="margin-top:8px"><input id="cnt" type="number" min="2" max="60" value="24"><button class="btn sec sm" id="fill">번호로 채우기</button></div></div>
+      <div class="row" style="margin-top:8px"><input id="cnt" type="number" min="2" max="60" value="24"><button class="btn sec sm" id="fill">번호로 채우기</button></div>
+      <label>명단 저장 (반별로 저장해 두고 불러와요)</label><select id="roster"></select>
+      <div class="row" style="margin-top:6px"><input id="rname" type="text" placeholder="명단 이름 (예: 5-3)" style="flex:1;width:auto"><button class="btn sm" id="rsave">저장</button><button class="btn sec sm" id="rdel">삭제</button></div></div>
     <div><label>뽑을 인원 (먼저 골인한 순)</label><input id="win" type="number" min="1" max="60" value="1">
       <label>맵</label><select id="map"><option value="all">🎪 종합 코스 (다섯 가지 모두)</option><option value="spin">🍭 빙글빙글 막대</option><option value="door">🚪 문 뚫기 대작전</option><option value="hill">⚽ 데굴데굴 공 언덕</option><option value="tile">🧊 조마조마 발판</option><option value="swing">🔔 쿵쾅 진자 다리</option><option value="rand">🎲 랜덤</option></select>
+      <label>코스 길이</label><select id="len"><option value="short">짧게 (1분 안팎)</option><option value="long">길게</option></select>
       <label>배경음악</label><select id="bgm"><option value="rand">🎲 랜덤</option><option value="0">Nyang-E</option><option value="1">공놀이 좋아</option><option value="2">Ding Dong Day</option><option value="off">끄기</option></select>
       <div class="tip">인원수에 맞춰 코스 폭이 자동으로 바뀌어요. (최대 60명)<br>달리는 중에 캐릭터를 누르면 그 친구를 따라가요. Esc나 「전체 보기」로 돌아와요.<br>떨어지면 마지막으로 지난 🚩 세이브 포인트에서 다시 출발해요.</div>
       <div style="margin-top:18px;text-align:right"><button class="btn pink" id="go" style="font-size:24px;padding:12px 34px">출발 준비! ▶</button></div></div>
@@ -315,10 +318,11 @@ function buildCourse(){
   var n=G.names.length,W=G.W=clamp(8+n*0.42,10,24);
   var cols=Math.max(3,Math.floor((W-1.6)/1.25)),rows=Math.ceil(n/cols);
   G.startCols=cols;
-  var z=-(rows*1.15+3),y=0,minY=0,short=MAPS[G.mapKey].types.length>2,dir=rnd()<0.5?1:-1;
+  var z=-(rows*1.15+3),y=0,minY=0,short=MAPS[G.mapKey].types.length>2,dir=rnd()<0.5?1:-1,types=MAPS[G.mapKey].types.slice();
+  if(G.lenShort){if(types.length>2){types.sort(function(){return rnd()-0.5});types=types.slice(0,3)}else types=types.slice(0,1)}
   function add(type,len,ex){var s=Object.assign({type:type,z0:z,len:len,y0:y,rise:0,turn:0},ex||{});G.segs.push(s);z+=len;y+=s.rise;minY=Math.min(minY,y);return s}
   add('flat',rows*1.15+3+5);
-  MAPS[G.mapKey].types.forEach(function(t,i,arr){
+  types.forEach(function(t,i,arr){
     if(t==='spin')add('spin',short?37:46);
     else if(t==='door')add('door',short?34:44);
     else if(t==='hill')add('hill',short?40:48,{rise:short?8:9});
@@ -618,33 +622,86 @@ function geos(){if(GEO)return GEO;var star=[],heart=[],tri=[],i,a;
     {g:ext(heart,0.4),sc:[1.05,1.05,1],fz:0.28,ey:0.1,top:0.4,noTop:1},
     {g:new THREE.CylinderGeometry(0.4,0.44,0.9,20),sc:[1,1,0.92],fz:0.38,ey:0.16,top:0.47}
   ];return GEO}
+var FRIENDS=['해바라기','벚꽃','구름','별','하트','딸기','버섯','선인장','푸딩','고양이','토끼','꿀벌'];
 function makeChar(name,i,n){
   var g=new THREE.Group(),b=new THREE.Group();g.add(b);
-  var col=new THREE.Color().setHSL((i/n+0.03*(i%3))%1,0.72,0.62),dark=col.clone().multiplyScalar(0.72);
-  var sp=geos()[i%6],EY=0.62+sp.ey,FZ=sp.fz,EX=sp.ex||0.14;
-  var body=new THREE.Mesh(sp.g,new THREE.MeshLambertMaterial({color:col}));body.scale.set(sp.sc[0],sp.sc[1],sp.sc[2]);body.position.y=0.62;b.add(body);
+  var col=new THREE.Color().setHSL((i/n+0.03*(i%3))%1,0.72,0.6),dark=col.clone().multiplyScalar(0.8);
+  var L=function(c,o){return new THREE.MeshLambertMaterial(Object.assign({color:c},o||{}))};
+  var add=function(geo,m,x,y,z,sx,sy,sz){var me=new THREE.Mesh(geo,typeof m==='number'?L(m):m);me.position.set(x,y,z);if(sx)me.scale.set(sx,sy,sz);b.add(me);return me};
+  var S=function(r,m,x,y,z,sx,sy,sz){return add(new THREE.SphereGeometry(r,14,10),m,x,y,z,sx,sy,sz)};
+  var kind=i%12,F={fz:0.36,ey:0.78,ex:0.14,arm:null,k:1},GS=geos(),a,k,m;
+  if(kind===0){ // 해바라기
+    for(k=0;k<12;k++){a=k/12*PI*2;m=S(0.15,k%2?0xffcf2e:0xffb81f,Math.cos(a)*0.44,0.7+Math.sin(a)*0.44,0,0.75,1.55,0.4);m.rotation.z=a-PI/2}
+    S(0.33,0x9a6232,0,0.7,0,1,1,0.72);add(new THREE.CylinderGeometry(0.1,0.12,0.3,8),0x4fbf6b,0,0.16,0);
+    [-1,1].forEach(function(s){var lf=S(0.14,0x5fcf7f,s*0.24,0.2,0,1.5,0.35,0.8);lf.rotation.z=s*0.5});
+    F={fz:0.25,ey:0.76,ex:0.12,k:1};
+  }else if(kind===1){ // 벚꽃
+    for(k=0;k<5;k++){a=PI/2+k/5*PI*2;m=S(0.27,k%2?0xffb7d0:0xffc6da,Math.cos(a)*0.32,0.66+Math.sin(a)*0.32,0,1,1.15,0.5);m.rotation.z=a-PI/2}
+    S(0.24,0xfff0f5,0,0.66,0.04,1,1,0.75);for(k=0;k<5;k++){a=k/5*PI*2;S(0.03,0xffd54a,Math.cos(a)*0.13,0.86+Math.sin(a)*0.05,0.16)}
+    F={fz:0.23,ey:0.7,ex:0.1,k:0.9};
+  }else if(kind===2){ // 구름
+    S(0.36,0xffffff,0,0.6,0);S(0.27,0xffffff,-0.3,0.5,0);S(0.27,0xffffff,0.3,0.5,0);S(0.25,0xffffff,-0.15,0.86,0);S(0.23,0xffffff,0.17,0.82,0);S(0.2,0xeaf6ff,0,0.45,-0.2);
+    F={fz:0.36,ey:0.66,ex:0.13,k:1};
+  }else if(kind===3){add(GS[3].g,0xffd84a,0,0.66,0);F={fz:0.26,ey:0.66,ex:0.1,arm:0xffc21a,k:1}} // 별
+  else if(kind===4){add(GS[4].g,0xff6f91,0,0.66,0,1.08,1.08,1);F={fz:0.28,ey:0.74,ex:0.14,arm:0xff4f79,k:1}} // 하트
+  else if(kind===5){ // 딸기
+    S(0.42,0xff4d5e,0,0.58,0,1,1.2,0.95);
+    for(k=0;k<12;k++){a=k*2.4;var rr=0.2+(k%4)*0.07;S(0.025,0xffe27a,Math.cos(a)*rr,0.42+Math.sin(a)*rr*0.9+(k%3)*0.02,0.3+0.08*(1-rr/0.42))}
+    for(k=0;k<5;k++){a=k/5*PI*2;m=S(0.15,0x4fbf6b,Math.cos(a)*0.17,1.05,Math.sin(a)*0.17,1.3,0.3,0.7);m.rotation.y=-a}
+    add(new THREE.CylinderGeometry(0.03,0.03,0.16,6),0x3d9b53,0,1.14,0);
+    F={fz:0.37,ey:0.74,ex:0.14,arm:0xff3a4e,k:1};
+  }else if(kind===6){ // 버섯
+    add(new THREE.CylinderGeometry(0.25,0.3,0.55,14),0xfff3dc,0,0.36,0);
+    m=add(new THREE.SphereGeometry(0.52,18,10,0,PI*2,0,PI/2),0xff5a5a,0,0.58,0,1,0.9,1);add(new THREE.CircleGeometry(0.52,18),L(0xffe9cf,{side:THREE.DoubleSide}),0,0.58,0).rotation.x=PI/2;
+    [[0,1.0,0.12,0.11],[0.3,0.82,0.2,0.08],[-0.3,0.84,0.15,0.09],[0.12,0.86,-0.3,0.09],[-0.2,0.8,-0.28,0.07],[0.02,0.74,0.42,0.07]].forEach(function(d){S(d[3],0xffffff,d[0],d[1],d[2],1,0.5,1)});
+    F={fz:0.28,ey:0.42,ex:0.11,arm:0xfff3dc,k:0.9};
+  }else if(kind===7){ // 선인장
+    add(new THREE.CylinderGeometry(0.3,0.32,0.62,14),0x4fbf6b,0,0.45,0);S(0.3,0x4fbf6b,0,0.76,0);
+    [-1,1].forEach(function(s){add(new THREE.CylinderGeometry(0.09,0.09,0.2,8),0x45ad5f,s*0.38,0.55,0).rotation.z=PI/2;add(new THREE.CylinderGeometry(0.09,0.09,0.24,8),0x45ad5f,s*0.46,0.68+(s>0?0:0.06),0);S(0.09,0x45ad5f,s*0.46,0.8+(s>0?0:0.06),0)});
+    for(k=0;k<5;k++){a=k/5*PI*2;S(0.07,0xff8fb4,Math.cos(a)*0.08,1.08,Math.sin(a)*0.08,1,0.6,1)}S(0.05,0xffe27a,0,1.11,0);
+    F={fz:0.31,ey:0.66,ex:0.12,k:1};
+  }else if(kind===8){ // 푸딩
+    add(new THREE.CylinderGeometry(0.3,0.44,0.7,18),0xffd978,0,0.45,0);add(new THREE.CylinderGeometry(0.31,0.34,0.12,18),0x9a5a22,0,0.84,0);
+    for(k=0;k<6;k++){a=k/6*PI*2+0.3;S(0.07,0x9a5a22,Math.cos(a)*0.31,0.74,Math.sin(a)*0.31,1,1.4,0.6)}
+    S(0.1,0xff4d5e,0.04,0.99,0);add(new THREE.CylinderGeometry(0.012,0.012,0.16,5),0x5a8f3a,0.07,1.12,0).rotation.z=-0.4;
+    F={fz:0.38,ey:0.52,ex:0.14,arm:0xffc94f,k:1};
+  }else if(kind===9){ // 고양이
+    var cc=[0xffc98a,0xc9c9d4,0xffffff,0x8f8f9c][Math.floor(i/12)%4];
+    S(0.42,cc,0,0.6,0,1.05,1.1,0.95);
+    [-1,1].forEach(function(s){m=add(new THREE.ConeGeometry(0.15,0.26,4),cc,s*0.25,1.08,0);m.rotation.y=PI/4;add(new THREE.ConeGeometry(0.08,0.15,4),0xffb0c4,s*0.25,1.06,0.05).rotation.y=PI/4;
+      [0.04,-0.03].forEach(function(dy,q){var w=add(new THREE.BoxGeometry(0.2,0.012,0.012),0x555555,s*0.33,0.66+dy,0.33);w.rotation.z=s*(q?-0.15:0.15)})});
+    S(0.09,cc,0.1,0.3,-0.42);S(0.08,cc,0.2,0.42,-0.5);S(0.07,cc,0.26,0.56,-0.52);S(0.035,0xff8fa8,0,0.69,0.41);
+    F={fz:0.36,ey:0.78,ex:0.15,arm:cc,k:1};
+  }else if(kind===10){ // 토끼
+    S(0.4,0xffffff,0,0.58,0,1,1.12,0.95);
+    [-1,1].forEach(function(s){m=S(0.1,0xffffff,s*0.16,1.22,0,1,2.6,0.6);m.rotation.z=-s*0.14;m=S(0.055,0xffb0c4,s*0.16,1.22,0.045,1,2.6,0.4);m.rotation.z=-s*0.14});
+    S(0.12,0xffffff,0,0.32,-0.38);S(0.035,0xff8fa8,0,0.67,0.4);
+    F={fz:0.35,ey:0.76,ex:0.14,arm:0xffffff,k:1};
+  }else{ // 꿀벌
+    S(0.41,0xffd23f,0,0.6,0,1,1.15,0.98);
+    [0.46,0.7].forEach(function(y,q){m=add(new THREE.TorusGeometry(q?0.385:0.4,0.055,8,24),0x3a3a44,0,y-(q?0.02:0.06),0);m.rotation.x=PI/2});
+    [-1,1].forEach(function(s){m=S(0.2,L(0xffffff,{transparent:true,opacity:0.75}),s*0.26,0.92,-0.3,1,0.25,1.5);m.rotation.z=s*0.6;
+      add(new THREE.CylinderGeometry(0.014,0.014,0.24,5),0x3a3a44,s*0.12,1.16,0.08).rotation.z=-s*0.3;S(0.045,0x3a3a44,s*0.16,1.29,0.08)});
+    add(new THREE.ConeGeometry(0.06,0.16,8),0x3a3a44,0,0.5,-0.44).rotation.x=-PI/2;
+    F={fz:0.36,ey:0.84,ex:0.14,arm:0x3a3a44,k:1};
+  }
+  // 얼굴
   var blk=new THREE.MeshBasicMaterial({color:0x2b2b33}),wht=new THREE.MeshBasicMaterial({color:0xffffff}),pk=new THREE.MeshBasicMaterial({color:0xff8fa8});
   [-1,1].forEach(function(s){
-    var e=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),blk);e.position.set(s*EX,EY,FZ);b.add(e);
-    var sh=new THREE.Mesh(new THREE.SphereGeometry(0.022,6,6),wht);sh.position.set(s*EX+0.02,EY+0.03,FZ+0.05);b.add(sh);
-    var ck=new THREE.Mesh(new THREE.SphereGeometry(0.07,8,8),pk);ck.scale.set(1,0.6,0.4);ck.position.set(s*(EX+0.11),EY-0.12,FZ-0.02);b.add(ck);
-    var arm=new THREE.Mesh(new THREE.SphereGeometry(0.11,8,8),new THREE.MeshLambertMaterial({color:dark}));arm.position.set(s*0.45,0.6,0);b.add(arm);
+    S(0.06*F.k,blk,s*F.ex,F.ey,F.fz);S(0.022*F.k,wht,s*F.ex+0.02,F.ey+0.03,F.fz+0.05);
+    S(0.07*F.k,pk,s*(F.ex+0.11),F.ey-0.11,F.fz-0.03,1,0.6,0.4);
+    if(F.arm!=null)S(0.11,F.arm,s*0.46,0.56,0);
   });
-  var mo=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),blk);mo.scale.set(1.2,0.7,0.5);mo.position.set(0,EY-0.13,FZ+0.03);b.add(mo);
-  var feet=[];[-1,1].forEach(function(s){var f=new THREE.Mesh(new THREE.SphereGeometry(0.14,8,8),new THREE.MeshLambertMaterial({color:dark}));f.scale.set(1,0.6,1.35);f.position.set(s*0.18,0.08,0.03);g.add(f);feet.push(f)});
-  var tp=sp.noTop?9:Math.floor(i/6)%4,TY=0.62+sp.top-0.5,tm=new THREE.MeshLambertMaterial({color:[0xffd54a,0x7ee0c0,0xffffff,0xff8fb4][i%4]});
-  if(tp===0){[-1,1].forEach(function(s){var e=new THREE.Mesh(new THREE.SphereGeometry(0.13,8,8),new THREE.MeshLambertMaterial({color:col}));e.position.set(s*0.24,TY+1.12,0);b.add(e)})}
-  else if(tp===1){var st=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,0.3,6),tm);st.position.y=TY+1.26;b.add(st);var bl=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,8),tm);bl.position.y=TY+1.44;b.add(bl)}
-  else if(tp===2){[-1,1].forEach(function(s){var l=new THREE.Mesh(new THREE.SphereGeometry(0.13,8,8),new THREE.MeshLambertMaterial({color:0x5fcf7f}));l.scale.set(1.3,0.3,0.7);l.position.set(s*0.13,TY+1.2,0);l.rotation.z=s*0.6;b.add(l)})}
-  else if(tp===3){var hat=new THREE.Mesh(new THREE.ConeGeometry(0.18,0.34,10),tm);hat.position.y=TY+1.26;b.add(hat)}
+  S(0.045*F.k,blk,0,F.ey-0.12,F.fz+0.03,1.2,0.7,0.5);
+  var feet=[];[-1,1].forEach(function(s){var f=new THREE.Mesh(new THREE.SphereGeometry(0.14,10,8),L(col));f.scale.set(1,0.6,1.35);f.position.set(s*0.18,0.08,0.03);g.add(f);feet.push(f)});
   b.children.forEach(function(ch){ch.position.y-=0.62});b.position.y=0.62; /* 몸 가운데를 축으로 구르기 */
   var hit=new THREE.Mesh(new THREE.SphereGeometry(0.95,8,8),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));hit.position.y=0.7;g.add(hit);
-  var lab=labelSprite(name);lab.position.y=1.85;g.add(lab);
+  var lab=labelSprite(name);lab.position.y=2.0;g.add(lab);
   var sh2=new THREE.Mesh(new THREE.CircleGeometry(0.42,16),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.22,depthWrite:false}));sh2.rotation.x=-PI/2;scene.add(sh2);
   var ring=new THREE.Mesh(new THREE.TorusGeometry(0.62,0.07,8,24),new THREE.MeshBasicMaterial({color:0xffe14a}));ring.rotation.x=PI/2;ring.position.y=0.06;ring.visible=false;g.add(ring);
   scene.add(g);
   var c={name:name,i:i,g:g,b:b,feet:feet,hit:hit,shadow:sh2,ring:ring,col:'#'+col.getHexString(),
-    x:0,z:0,h:0,vy:0,hy:0,kx:0,kz:0,stun:0,inv:0,jcd:0,spd:5.2,mult:1,mgoal:1,mt:0,tx:0,wt:0,passed:{},door:null,tm:null,fall:0,boost:0,cp:0,shape:SHAPES[i%6],rank:0,ph:rnd()*6,face:0,tumble:0,jit:(rnd()-0.5)*0.5};
+    x:0,z:0,h:0,vy:0,hy:0,kx:0,kz:0,stun:0,inv:0,jcd:0,spd:5.2,mult:1,mgoal:1,mt:0,tx:0,wt:0,passed:{},door:null,tm:null,fall:0,boost:0,cp:0,shape:FRIENDS[kind],rank:0,ph:rnd()*6,face:0,tumble:0,jit:(rnd()-0.5)*0.5};
   hit.userData.c=c;return c;
 }
 function knock(c,vx,vz,vy,st){c.kx=vx;c.kz=vz;c.vy=vy;if(c.h<=0)c.h=0.01;c.stun=st;c.tumble=1;c.boost=0;burst(c.x,heightAt(c.z)+c.h,c.z,5);sfx('hit',c);if(G.follow===c)G.shake=0.35}
@@ -727,7 +784,7 @@ var hudT=0;
 function loop(){
   requestAnimationFrame(loop);
   var dt=Math.min(clock.getDelta(),0.05);
-  if(G.running){var n=G.speed>1?2:1,sd=dt*G.speed/n;for(var i=0;i<n;i++)step(sd)}
+  if(G.running){var n=Math.ceil(G.speed),sd=dt*G.speed/n;for(var i=0;i<n;i++)step(sd)}
   G.dyn.forEach(function(d){if(d.cloud){d.cloud.position.x+=d.cloud.userData.v*dt;if(Math.abs(d.cloud.position.x)>70)d.cloud.userData.v*=-1}});
   G.chars.forEach(function(c){syncChar(c,G.running?dt*G.speed:0)});
   updCam(dt);renderer.render(scene,camera);
@@ -741,7 +798,7 @@ function updHud(){
   $('#rank').innerHTML=h;
   $('#info').textContent=MAPS[G.mapKey].name+' · 골인 '+G.finished+' / '+G.winners+'명 뽑기';
   $('#btnAll').style.display=G.follow?'inline-block':'none';
-  $('#who').style.display=G.follow?'block':'none';if(G.follow)$('#who').textContent='👀 '+G.follow.name+' 시점';
+  $('#who').style.display=G.follow?'block':'none';if(G.follow)$('#who').textContent='👀 '+G.follow.name+' ('+G.follow.shape+' 친구) 시점';
 }
 function onFinish(c){
   toast((c.rank<=G.winners?'👑 ':'')+c.rank+'등 골인! '+c.name);
@@ -757,6 +814,7 @@ function showResult(){
 var toastT=null;function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on')},1800)}
 
 function startRace(names,winners,mapKey){
+  G.lenShort=$('#len').value!=='long';
   if(mapKey==='rand'){var ks=Object.keys(MAPS);mapKey=ks[Math.floor(rnd()*ks.length)]}
   G.names=names;G.winners=clamp(winners,1,names.length);G.mapKey=mapKey;G.finished=0;G.time=0;G.over=false;G.follow=null;G.started=false;G.running=true;
   buildCourse();placeChars();updCam(0,true);updHud();
@@ -769,7 +827,7 @@ function startRace(names,winners,mapKey){
 function parseNames(){return $('#names').value.split(/[\n,，]+/).map(function(s){return s.trim()}).filter(Boolean).slice(0,60)}
 function readSetup(){
   var names=parseNames();if(names.length<2){alert('이름을 2명 이상 넣어 주세요.');return null}
-  try{localStorage.setItem('jellyrun_v1',JSON.stringify({names:$('#names').value,win:$('#win').value,map:$('#map').value,bgm:$('#bgm').value}))}catch(e){}
+  try{localStorage.setItem('jellyrun_v1',JSON.stringify({names:$('#names').value,win:$('#win').value,map:$('#map').value,bgm:$('#bgm').value,len:$('#len').value}))}catch(e){}
   return {names:names,win:parseInt($('#win').value,10)||1,map:$('#map').value};
 }
 
@@ -779,8 +837,18 @@ function bind(){
   $('#fill').onclick=function(){var n=clamp(parseInt($('#cnt').value,10)||10,2,60),a=[];for(var i=1;i<=n;i++)a.push(i+'번');$('#names').value=a.join('\n');cntUp()};
   $('#names').addEventListener('input',cntUp);
   function cntUp(){$('#ncount').textContent=parseNames().length+'명'}
+  var RK='jellyrun_rosters';
+  function rosters(){try{return JSON.parse(localStorage.getItem(RK)||'{}')||{}}catch(e){return {}}}
+  function rosterUI(sel){var r=rosters(),h='<option value="">📋 저장된 명단 불러오기</option>';Object.keys(r).sort().forEach(function(k){h+='<option value="'+esc(k)+'"'+(k===sel?' selected':'')+'>'+esc(k)+' ('+r[k].split(/[\n,，]+/).filter(function(x){return x.trim()}).length+'명)</option>'});$('#roster').innerHTML=h}
+  $('#roster').onchange=function(){var r=rosters(),k=this.value;if(k&&r[k]!=null){$('#names').value=r[k];$('#rname').value=k;cntUp()}};
+  $('#rsave').onclick=function(){var k=$('#rname').value.trim();if(!k){alert('명단 이름을 적어 주세요. (예: 5-3)');return}if(parseNames().length<1){alert('이름을 먼저 넣어 주세요.');return}
+    var r=rosters();if(r[k]!=null&&!confirm('「'+k+'」 명단을 지금 이름들로 바꿔 저장할까요?'))return;r[k]=$('#names').value;try{localStorage.setItem(RK,JSON.stringify(r));rosterUI(k);toast2('「'+k+'」 명단을 저장했어요')}catch(e){alert('저장하지 못했어요.')}};
+  $('#rdel').onclick=function(){var k=$('#roster').value;if(!k){alert('지울 명단을 먼저 골라 주세요.');return}if(!confirm('「'+k+'」 명단을 지울까요?'))return;var r=rosters();delete r[k];try{localStorage.setItem(RK,JSON.stringify(r))}catch(e){}rosterUI('')};
+  function toast2(m){var t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},1800)}
+  rosterUI('');
   $('#btnAll').onclick=function(){G.follow=null;updHud()};
-  $('#btnSpd').onclick=function(){G.speed=G.speed===1?1.5:G.speed===1.5?2:1;this.textContent='⏩ '+G.speed+'배'};
+  $('#btnSpd').onclick=function(){G.speed=G.speed===1?2:G.speed===2?3:1;this.textContent='⏩ '+G.speed+'배';try{localStorage.setItem('jellyrun_speed',G.speed)}catch(e){}};
+  try{var sp0=+localStorage.getItem('jellyrun_speed');if(sp0===2||sp0===3){G.speed=sp0;$('#btnSpd').textContent='⏩ '+sp0+'배'}}catch(e){}
   $('#btnSnd').onclick=function(){audioInit();setMute(!SND.on)};
   $('#btnSet').onclick=function(){clearTimeout(G.cdT);G.running=false;if(bgmEl)bgmEl.pause();$('#count').style.display='none';$('#setup').classList.add('on');$('#result').classList.remove('on')};
   $('#again').onclick=function(){startRace(G.names,G.winners,$('#map').value)};
@@ -798,7 +866,7 @@ function bind(){
     G.follow=hit.length?hit[0].object.userData.c:null;updHud();
   });
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){G.follow=null;updHud()}});
-  try{var o=JSON.parse(localStorage.getItem('jellyrun_v1')||'null');if(o){$('#names').value=o.names||'';$('#win').value=o.win||1;$('#map').value=o.map||'all';if(o.bgm)$('#bgm').value=o.bgm}}catch(e){}
+  try{var o=JSON.parse(localStorage.getItem('jellyrun_v1')||'null');if(o){$('#names').value=o.names||'';$('#win').value=o.win||1;$('#map').value=o.map||'all';if(o.bgm)$('#bgm').value=o.bgm;if(o.len)$('#len').value=o.len}}catch(e){}
   if(!$('#names').value.trim())$('#fill').onclick();cntUp();
 }
 window.addEventListener('load',function(){
