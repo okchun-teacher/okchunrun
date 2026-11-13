@@ -338,6 +338,7 @@ function buildCourse(){
     if(s.type==='spin')initSpin(s);if(s.type==='door')initDoor(s);if(s.type==='hill')initHill(s);if(s.type==='tile')initTile(s);if(s.type==='swing')initSwing(s);
     if(s.link)initLink(s);
     if(s.type!=='flat')initCp(s);
+    placeHaz(s);
   });
   // 범위·바다
   var x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;for(var k=0;k<TR.X.length;k++){x0=Math.min(x0,TR.X[k]);x1=Math.max(x1,TR.X[k]);z0=Math.min(z0,TR.Z[k]);z1=Math.max(z1,TR.Z[k])}
@@ -373,6 +374,22 @@ function floorMesh(s,th){
   if(s.type!=='swing'){ribbon(s.z0,z1,-W/2-0.5,-W/2,0.7,0.7,mat(th.rail));ribbon(s.z0,z1,W/2,W/2+0.5,0.7,0.7,mat(th.rail))}
   else{ribbon(s.z0,z1,-W/2-0.5,-W/2-0.2,0.03,0,new THREE.MeshBasicMaterial({color:0xff5a7a}));ribbon(s.z0,z1,W/2+0.2,W/2+0.5,0.03,0,new THREE.MeshBasicMaterial({color:0xff5a7a}))}
   if(s.type!=='hill'){for(var z=s.z0+2;z<z1-1;z+=4)ribbon(z,z+0.5,-W/2+0.2,W/2-0.2,0.015,0,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.35}))}
+}
+/* --- 맵별 함정 배치 (적당히) --- */
+function placeHaz(s){
+  var W=G.W,sd=rnd()<0.5?1:-1,rx=function(){return (rnd()-0.5)*(W-3)};
+  if(s.type==='spin'){ // 막대 사이: 끈적이 2, 뒤로 튕김 1, 점프판 1
+    addSlime(s,sd*W*0.25,s.z0+7+2.0,W*0.4,2.2);addSlime(s,-sd*W*0.25,s.z0+7+18+2.0,W*0.4,2.2);
+    addPad(s,-sd*W*0.28,s.z0+7+9+2.4,false);if(s.len>40)addPad(s,sd*W*0.28,s.z0+7+27+2.4,true);
+  }else if(s.type==='door'){ // 문 앞: 끈적이는 좌우 번갈아, 튕김판 1
+    s.walls.forEach(function(w,i){if(i===0)return;addSlime(s,(i%2?sd:-sd)*W*0.24,w.z-6,W*0.42,2.4)});
+    addPad(s,rx(),s.walls[Math.min(2,s.walls.length-1)].z-3.2,false);
+  }else if(s.type==='swing'){ // 진자 사이: 끈적이 2, 점프판 1
+    addSlime(s,sd*W*0.2,s.z0+5+2.75-1.1,W*0.45,2.2);addSlime(s,-sd*W*0.2,s.z0+5+5.5*3+2.75-1.1,W*0.45,2.2);
+    addPad(s,rx()*0.6,s.z0+5+5.5*2-2.75,true);
+  }else if(s.link){ // 연결 길: 가끔 하나
+    var r=rnd();if(r<0.35)addSlime(s,rx(),s.z0+s.len*0.55,W*0.35,2.2);else if(r<0.6)addPad(s,rx(),s.z0+s.len*0.6,true);
+  }
 }
 /* --- 세이브 포인트 --- */
 function initCp(s){
@@ -497,22 +514,31 @@ function colDoor(s,c){
   }
 }
 /* --- 공 언덕 --- */
-function initHill(s){s.balls=[];s.t=0.5;s.bid=0;s.slime=[];s.tramp=[];
+/* --- 공용 함정: 끈적이 · 튕김판(뒤로) · 점프판(앞으로) --- */
+function addSlime(s,x,z,w,l){var W=G.W;w=Math.min(w,W-1);x=clamp(x,-W/2+w/2+0.2,W/2-w/2-0.2);var sl={x:x,z:z,w:w,l:l};(s.slime=s.slime||[]).push(sl);
+  ribbon(z,z+l,x-w/2,x+w/2,0.03,0,new THREE.MeshBasicMaterial({color:0x7ddc4a,transparent:true,opacity:0.9}));
+  for(var k=0;k<4;k++){var bl=new THREE.Mesh(new THREE.SphereGeometry(0.22+rnd()*0.2,10,8),mat(0x5fc93a));bl.scale.y=0.35;var bx=x+(rnd()-0.5)*w*0.8,bz=z+rnd()*l;place(bl,bx,heightAt(bz)+0.05,bz);scene.add(bl)}}
+function addPad(s,x,z,fwd){var W=G.W;x=clamp(x,-W/2+1.3,W/2-1.3);var tp={x:x,z:z,sq:0,fwd:fwd};
+  var m=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.1,0.35,20),mat(fwd?0x4fb8ff:0xff7ab0));place(m,x,heightAt(z)+0.18,z);scene.add(m);
+  var ring=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,0.37,20),mat(fwd?0xfff27a:0xffffff));m.add(ring);tp.m=m;(s.tramp=s.tramp||[]).push(tp)}
+function updHaz(s,dt){if(s.tramp)s.tramp.forEach(function(tp){if(tp.sq>0){tp.sq-=dt;var k=1+Math.sin(tp.sq*30)*tp.sq*1.2;tp.m.scale.set(k,1/k,k)}})}
+function colHaz(s,c){
+  var i,on=false;
+  if(s.slime&&c.h<0.2&&c.stun<=0){for(i=0;i<s.slime.length;i++){var sl=s.slime[i];if(c.z>sl.z&&c.z<sl.z+sl.l&&Math.abs(c.x-sl.x)<sl.w/2){on=true;break}}}
+  if(on&&!c.slow)sfx('slime',c);c.slow=on;
+  if(s.tramp)for(i=0;i<s.tramp.length;i++){var tp=s.tramp[i],tx=c.x-tp.x,tz=c.z-tp.z;if(tx*tx+tz*tz<1.25&&c.h<0.4&&c.inv<=0){
+    if(tp.fwd)knock(c,(rnd()-0.5)*3,7+rnd()*3,9,0.7);else knock(c,(rnd()-0.5)*5,-(7+rnd()*4),8.5,0.9);
+    c.inv=0.6;tp.sq=0.35;sfx(tp.fwd?'boost':'bump',c)}}
+}
+function initHill(s){s.balls=[];s.t=0.5;s.bid=0;
   var W=G.W,n=Math.floor((s.len-10)/7);
-  for(var i=0;i<n;i++){var z=s.z0+5+i*7+rnd()*2;
-    // 끈적이 웅덩이: 폭의 절반쯤을 덮고 좌우 번갈아
-    var w=W*(0.38+rnd()*0.2),x=(i%2?1:-1)*(W/2-w/2-0.3)*(0.5+rnd()*0.5),sl={x:x,z:z,w:w,l:2.6+rnd()*1.2};s.slime.push(sl);
-    ribbon(sl.z,sl.z+sl.l,sl.x-sl.w/2,sl.x+sl.w/2,0.03,0,new THREE.MeshBasicMaterial({color:0x7ddc4a,transparent:true,opacity:0.9}));
-    for(var k=0;k<4;k++){var bl=new THREE.Mesh(new THREE.SphereGeometry(0.22+rnd()*0.2,10,8),mat(0x5fc93a));bl.scale.y=0.35;var bx=sl.x+(rnd()-0.5)*sl.w*0.8,bz=sl.z+rnd()*sl.l;place(bl,bx,heightAt(bz)+0.05,bz);scene.add(bl)}
-    // 반대쪽에는 뒤로 튕기는 판
-    if(i%2===0||W>14){var tp={x:-x*(0.6+rnd()*0.4),z:z+3.4,r:1.0,sq:0};var m=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.1,0.35,20),mat(0xff7ab0));place(m,tp.x,heightAt(tp.z)+0.18,tp.z);scene.add(m);
-      var ring=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,0.37,20),mat(0xffffff));m.add(ring);tp.m=m;s.tramp.push(tp)}
-  }
+  for(var i=0;i<n;i++){var z=s.z0+5+i*7+rnd()*2,w=W*(0.38+rnd()*0.2),x=(i%2?1:-1)*(W/2-w/2-0.3)*(0.5+rnd()*0.5);
+    addSlime(s,x,z,w,2.6+rnd()*1.2);
+    if(i%2===0||W>14)addPad(s,-x*(0.6+rnd()*0.4),z+3.4,false);}
 }
 var BALLC=[0xff6f9a,0x4fc3f7,0xffd54a,0xb39bff,0xff9f5a];
 function updHill(s,dt){
   s.t-=dt;
-  s.tramp.forEach(function(tp){if(tp.sq>0){tp.sq-=dt;var k=1+Math.sin(tp.sq*30)*tp.sq*1.2;tp.m.scale.set(k,1/k,k)}});
   if(s.t<=0&&G.started){s.t=(0.5+rnd()*0.55)*(G.W>16?0.75:1);var R=0.95+rnd()*0.75;
     var m=new THREE.Mesh(new THREE.SphereGeometry(R,18,14),new THREE.MeshLambertMaterial({map:stripeTex('#ffffff','#'+new THREE.Color(BALLC[s.bid%5]).getHexString(),6)}));
     scene.add(m);s.balls.push({id:++s.bid+s.id*1000,x:(rnd()-0.5)*(G.W-2*R-0.4),z:s.z0+s.len-1,vx:(rnd()-0.5)*3,vz:-(6.5+rnd()*3.5),R:R,m:m});}
@@ -521,10 +547,6 @@ function updHill(s,dt){
     if(b.z<s.z0-0.5){b.m.scale.multiplyScalar(1-dt*6);if(b.m.scale.x<0.1||b.z<s.z0-4){scene.remove(b.m);s.balls.splice(i,1)}}}
 }
 function colHill(s,c){
-  var i2,on=false;
-  if(c.h<0.2&&c.stun<=0){for(i2=0;i2<s.slime.length;i2++){var sl=s.slime[i2];if(c.z>sl.z&&c.z<sl.z+sl.l&&Math.abs(c.x-sl.x)<sl.w/2){on=true;break}}}
-  if(on&&!c.slow)sfx('slime',c);c.slow=on;
-  for(i2=0;i2<s.tramp.length;i2++){var tp=s.tramp[i2],tx=c.x-tp.x,tz=c.z-tp.z;if(tx*tx+tz*tz<1.25&&c.h<0.4&&c.inv<=0){knock(c,(rnd()-0.5)*5,-(7+rnd()*4),8.5,0.9);c.inv=0.6;tp.sq=0.35;sfx('bump',c)}}
   for(var i=0;i<s.balls.length;i++){var b=s.balls[i],dz=b.z-c.z,dx=b.x-c.x;
     if(dz>0&&dz<7&&Math.abs(dx)<b.R+0.8&&c.dodge!==b.id){c.dodge=b.id;if(rnd()<0.6){c.tx=clamp(c.x+(dx>0?-1:1)*(b.R+1.6),-G.W/2+0.8,G.W/2-0.8);c.wt=0.9}}
     if(dx*dx+dz*dz<(b.R+0.38)*(b.R+0.38)&&c.inv<=0&&c.h<b.R*1.6){knock(c,(dx>0?-1:1)*(2+rnd()*2),-8,5,1.0);c.inv=0.6}
@@ -647,11 +669,11 @@ function updChar(c,dt){
     c.mult+=(c.mgoal-c.mult)*dt*3;
     c.wt-=dt;if(c.wt<=0){c.tx=(rnd()-0.5)*(G.W-2);c.wt=1+rnd()*2.2}
     if(seg.type==='door')steerDoor(seg,c);
-    c.boost-=dt;var vx=clamp((c.tx-c.x)*2.2,-3.2,3.2),vz=c.spd*c.mult*(seg.type==='hill'?(c.slow?0.32:0.82):(seg.rise<0?1.25:1))*(c.boost>0?1.75:1);
+    c.boost-=dt;var vx=clamp((c.tx-c.x)*2.2,-3.2,3.2),vz=c.spd*c.mult*(seg.type==='hill'?0.82:(seg.rise<0?1.25:1))*(c.slow?0.38:1)*(c.boost>0?1.75:1);
     c.x+=vx*dt;c.z+=vz*dt;c.face+=(Math.atan2(vx,vz)-c.face)*dt*8;
     if(c.h===0&&rnd()<0.018*dt)knock(c,(rnd()-0.5)*2,1.5,3,0.7);
   }
-  if(seg.type!=='hill')c.slow=false;
+  colHaz(seg,c);
   if(seg.type==='spin')colSpin(seg,c);else if(seg.type==='door')colDoor(seg,c);else if(seg.type==='hill')colHill(seg,c);else if(seg.type==='swing')colSwing(seg,c);
   if(seg.pads&&c.stun<=0)colLink(seg,c);
   var lim=G.W/2-0.45;
@@ -687,7 +709,7 @@ function separate(){
 function step(dt){
   G.time+=dt;
   G.segs.forEach(function(s){if(s.type==='spin')updSpin(s,dt);else if(s.type==='door')updDoor(s,dt);else if(s.type==='hill')updHill(s,dt);else if(s.type==='tile')updTile(s,dt);else if(s.type==='swing')updSwing(s,dt)});
-  updParts(dt);updCps(dt);
+  G.segs.forEach(function(sg){updHaz(sg,dt)});updParts(dt);updCps(dt);
   if(G.started){G.chars.forEach(function(c){updChar(c,dt)});separate()}
 }
 var camP=new THREE.Vector3(0,10,-14),camL=new THREE.Vector3(0,0,6),tv=new THREE.Vector3();
