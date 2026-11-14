@@ -310,7 +310,7 @@ function heightAt(z){var s=segAt(z);if(z<s.z0)return s.y0;return s.y0+(s.rise?cl
 
 function buildCourse(){
   while(scene.children.length)scene.remove(scene.children[0]);
-  G.segs=[];G.dyn=[];G.parts=[];
+  G.segs=[];G.dyn=[];G.parts=[];G.shards=[];G.tape=null;
   var th=G.theme=THEMES[MAPS[G.mapKey].theme];
   scene.background=skyTex(th.top,th.bot);
   scene.add(new THREE.HemisphereLight(0xffffff,0xb0a0c0,0.85));
@@ -354,6 +354,11 @@ function buildCourse(){
   addP(new THREE.Mesh(new THREE.BoxGeometry(W,0.04,0.8),ck()),0,0.02,0.4);
   var fy=G.endY;
   addP(new THREE.Mesh(new THREE.BoxGeometry(W,0.04,1.2),ck()),0,fy+0.02,G.fz);
+  // 결승 테이프(1등이 끊는다)와 도착 구역
+  G.tape={cut:false,t:0,h:[]};
+  [-1,1].forEach(function(sg){var pv=new THREE.Group();pv.rotation.order='YXZ';place(pv,sg*(W/2+0.05),fy+0.78,G.fz);pv.userData.ry=pv.rotation.y;pv.userData.sg=sg;
+    var tp=new THREE.Mesh(new THREE.BoxGeometry(W/2+0.05,0.16,0.03),new THREE.MeshBasicMaterial({map:stripeTex('#ff4d6d','#ffffff',10)}));tp.position.x=-sg*(W/4+0.025);pv.add(tp);scene.add(pv);G.tape.h.push(pv)});
+  ribbon(G.fz+2.2,G.endZ-0.6,-W/2+0.4,W/2-0.4,0.018,0,new THREE.MeshBasicMaterial({color:0xffe9a8,transparent:true,opacity:0.7}));
   [-1,1].forEach(function(sg){addP(new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,6,12),mat(0xff6f9a)),sg*(W/2+0.3),fy+3,G.fz);
     addP(new THREE.Mesh(new THREE.SphereGeometry(0.6,16,12),mat(0xffd54a)),sg*(W/2+0.3),fy+6.2,G.fz)});
   addP(new THREE.Mesh(new THREE.BoxGeometry(W+1.4,1.3,0.4),ck()),0,fy+5.4,G.fz);
@@ -361,7 +366,7 @@ function buildCourse(){
   // 장식: 구름, 사탕 기둥(곧은 구간 옆)
   var cm=new THREE.MeshLambertMaterial({color:0xffffff});
   for(var i=0;i<34;i++){var g=new THREE.Group();for(k=0;k<3;k++){var sp=new THREE.Mesh(new THREE.SphereGeometry(1.6+rnd()*1.4,10,8),cm);sp.position.set(k*2.1-2,rnd()*0.8,rnd()*1.2);sp.scale.y=0.7;g.add(sp)}
-    g.position.set(x0-45+rnd()*(x1-x0+90),minY-6+rnd()*26,z0-30+rnd()*(z1-z0+70));g.userData.v=(0.3+rnd()*0.5)*(rnd()<0.5?-1:1);scene.add(g);G.dyn.push({cloud:g})}
+    var maxY=Math.max.apply(null,G.segs.map(function(q){return q.y0+Math.max(0,q.rise)}));g.position.set(x0-45+rnd()*(x1-x0+90),rnd()<0.6?minY-11+rnd()*6:maxY+15+rnd()*9,z0-30+rnd()*(z1-z0+70)); /* 구름은 코스 아래나 한참 위에만: 화면을 가리지 않게 */g.userData.v=(0.3+rnd()*0.5)*(rnd()<0.5?-1:1);scene.add(g);G.dyn.push({cloud:g})}
   G.segs.forEach(function(s){if(s.turn)return;for(var zz=s.z0+2;zz<s.z0+s.len-2;zz+=10){[-1,1].forEach(function(sg){if(rnd()<0.3)return;var hgt=3+rnd()*5,col=th.deco[Math.floor(rnd()*3)];
       var base=heightAt(zz)-2-rnd()*3,px=sg*(W/2+3.5+rnd()*3),pz=zz+rnd()*4;
       addP(new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.9,hgt,12),mat(col)),px,base+hgt/2,pz);
@@ -370,6 +375,8 @@ function buildCourse(){
   var stx=(function(){var c=document.createElement('canvas');c.width=c.height=64;var x=c.getContext('2d');x.font='52px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('⭐',32,36);return new THREE.CanvasTexture(c)})();
   for(i=0;i<60;i++){var sp2=new THREE.Sprite(new THREE.SpriteMaterial({map:stx,transparent:true,depthTest:false}));sp2.visible=false;sp2.scale.set(0.5,0.5,1);scene.add(sp2);G.parts.push({s:sp2,t:0,v:new THREE.Vector3()})}
 }
+function updTape(dt){var T=G.tape;if(!T||!T.cut||T.t>1.2)return;T.t+=dt;var k=Math.min(1,T.t/0.45);
+  T.h.forEach(function(pv){pv.rotation.y=pv.userData.ry-pv.userData.sg*k*1.9;pv.rotation.z=pv.userData.sg*Math.sin(k*PI)*0.25;pv.position.y-=k>=1?dt*1.2:0})}
 function burst(x,y,z,n){var p=toW(x,z),k=0;for(var i=0;i<G.parts.length&&k<(n||6);i++){var q=G.parts[i];if(q.t>0)continue;k++;q.t=0.6+rnd()*0.3;q.s.visible=true;q.s.position.set(p.X,y+0.8,p.Z);q.v.set((rnd()-0.5)*6,3+rnd()*4,(rnd()-0.5)*6)}}
 function updParts(dt){G.parts.forEach(function(q){if(q.t<=0)return;q.t-=dt;q.v.y-=12*dt;q.s.position.addScaledVector(q.v,dt);var sc=Math.max(0.05,q.t)*0.9;q.s.scale.set(sc,sc,1);if(q.t<=0)q.s.visible=false})}
 function floorMesh(s,th){
@@ -491,13 +498,23 @@ function initDoor(s){
   }
 }
 function updDoor(s,dt){s.walls.forEach(function(w){w.doors.forEach(function(d){
-  if(d.fly){d.ft+=dt;d.off+=7*dt;d.y+=(4-d.ft*14)*dt;var pp=toW(d.cx,d.wz+d.off);d.m.position.set(pp.X,d.y,pp.Z);d.m.rotation.order='YXZ';d.m.rotation.x+=6*dt;if(d.ft>1.4){d.fly=false;d.m.visible=false}}
   if(d.shake>0){d.shake-=dt;d.m.rotation.z=Math.sin(d.shake*40)*0.08*d.shake*3;if(d.shake<=0)d.m.rotation.z=0}
 })})}
+/* 문이 여러 조각으로 부서져 날아간다 */
+function smash(d,w){
+  d.m.visible=false;var col=d.m.material.color.getHex(),hw=(w.dw-0.3)/2,y0=heightAt(w.z);
+  for(var ix=0;ix<3;ix++)for(var iy=0;iy<3;iy++){
+    var m=new THREE.Mesh(new THREE.BoxGeometry(hw*2/3-0.04,0.76,0.26),mat(col));m.rotation.order='YXZ';scene.add(m);
+    G.shards.push({m:m,x:d.cx+(ix-1)*hw*2/3,z:w.z,y:y0+0.4+iy*0.8,vx:(ix-1)*2.2+(rnd()-0.5)*2.5,vz:3+rnd()*4.5,vy:2.5+rnd()*4+iy,rx:(rnd()-0.5)*14,rz:(rnd()-0.5)*14,t:1.5});}
+}
+function updShards(dt){for(var i=G.shards.length-1;i>=0;i--){var q=G.shards[i];q.t-=dt;q.vy-=20*dt;q.x+=q.vx*dt;q.z+=q.vz*dt;q.y+=q.vy*dt;
+  var fl=heightAt(q.z)+0.15;if(q.y<fl&&Math.abs(q.x)<G.W/2){q.y=fl;q.vy=Math.abs(q.vy)*0.35;q.vx*=0.6;q.vz*=0.6;q.rx*=0.5;q.rz*=0.5}
+  var p=toW(q.x,q.z);q.m.position.set(p.X,q.y,p.Z);q.m.rotation.x+=q.rx*dt;q.m.rotation.z+=q.rz*dt;if(q.t<0.4){var k=Math.max(0.01,q.t/0.4);q.m.scale.set(k,k,k)}
+  if(q.t<=0){scene.remove(q.m);G.shards.splice(i,1)}}}
 function nextWall(s,c){for(var i=0;i<s.walls.length;i++)if(!c.passed[s.walls[i].id])return s.walls[i];return null}
 function steerDoor(s,c){
   var w=nextWall(s,c);if(!w||w.z-c.z>9)return;
-  if(!c.door||c.door.w!==w.id||(w.doors[c.door.d].known&&!w.doors[c.door.d].open)){
+  if(!c.door||c.door.w!==w.id||(!c.door.sure&&w.doors[c.door.d].known&&!w.doors[c.door.d].open)){
     var open=[],unk=[];w.doors.forEach(function(d,i){if(d.open)open.push(i);else if(!d.known)unk.push(i)});
     var pick;
     if(open.length&&(rnd()<0.8||!unk.length)){pick=open[0];open.forEach(function(i){if(Math.abs(w.doors[i].cx-c.x)<Math.abs(w.doors[pick].cx-c.x))pick=i})}
@@ -512,7 +529,7 @@ function colDoor(s,c){
   if(c.z>w.z-0.45){
     var W=G.W,di=clamp(Math.floor((c.x+W/2)/w.dw),0,w.doors.length-1),d=w.doors[di];
     var al=Math.abs(c.x-d.cx)<w.dw/2-0.32;
-    if(al&&(d.open||d.real)){if(!d.open){d.open=true;d.known=true;d.fly=true;d.ft=0;burst(d.cx,heightAt(w.z)+1,w.z,5);sfx('pop',c)}c.passed[w.id]=1}
+    if(al&&(d.open||d.real)){if(!d.open){d.open=true;d.known=true;smash(d,w);burst(d.cx,heightAt(w.z)+1,w.z,6);sfx('pop',c);c.kz=0;c.mult=Math.max(c.mult,1.15)}c.passed[w.id]=1}
     else if(al){c.z=w.z-0.6;knock(c,(rnd()-0.5)*3,-5,3.5,0.6);d.known=true;d.shake=0.4;sfx('bonk',c);d.m.material.color.setHex(0x9aa0a8);c.door=null}
     else{c.z=w.z-0.45}
   }
@@ -712,9 +729,16 @@ function placeChars(){
 }
 function updChar(c,dt){
   c.inv-=dt;c.jcd-=dt;
-  if(c.rank){ // 골인 후 자리로
-    var k=c.rank-1,cols=G.startCols,px=((k%cols)-(Math.min(cols,G.chars.length)-1)/2)*1.25,pz=G.fz+3+Math.floor(k/cols)*1.2;
-    c.x+=(px-c.x)*dt*3;c.z+=(pz-c.z)*dt*3;c.face+=(PI-c.face)*dt*4;c.ph+=dt*7;c.hy=Math.abs(Math.sin(c.ph))*(c.rank<=G.winners?0.55:0.15);if(c.h>0){c.h+=c.vy*dt;c.vy-=20*dt;if(c.h<0)c.h=0}return}
+  if(c.rank){ // 골인 후: 속도를 줄이며 자기 자리까지 달려가서 돌아서 환호
+    var k=c.rank-1,cols=G.startCols,px=((k%cols)-(Math.min(cols,G.chars.length)-1)/2)*1.25,pz=G.fz+4.2+Math.floor(k/cols)*1.25;
+    if(c.h>0||c.vy>0){c.h+=c.vy*dt;c.vy-=20*dt;if(c.h<=0){c.h=0;c.vy=0}}
+    var dx=px-c.x,dz=pz-c.z,d=Math.sqrt(dx*dx+dz*dz);
+    if(!c.arr&&d>0.12){var sp=Math.min(c.spd*c.mult,1.2+d*1.9)*dt;if(sp>d)sp=d;c.x+=dx/d*sp;c.z+=dz/d*sp;
+      var ta=Math.atan2(dx,dz),da=ta-c.face;while(da>PI)da-=2*PI;while(da<-PI)da+=2*PI;c.face+=da*Math.min(1,dt*9);c.mult+=(0.75-c.mult)*dt*1.5}
+    else{c.arr=true;var da2=PI-c.face;while(da2>PI)da2-=2*PI;while(da2<-PI)da2+=2*PI;c.face+=da2*Math.min(1,dt*5);c.cheer=(c.cheer||0)+dt;
+      if(c.rank<=G.winners){c.ph+=dt*8;c.hy=Math.abs(Math.sin(c.ph))*0.5;if(c.h===0&&rnd()<0.25*dt){c.vy=6.5;c.h=0.01;c.spin=1}}
+      else{c.ph+=dt*3.2;c.hy=Math.abs(Math.sin(c.ph))*0.05}}
+    return}
   if(c.fall>0){c.fall-=dt;c.vy-=24*dt;c.h+=c.vy*dt;c.tumble=1;
     if(c.fall<=0){c.fall=0;c.h=0;c.vy=0;c.z=c.respawn;c.x=(rnd()-0.5)*(G.W-2);c.inv=0.8;c.tx=c.x;c.kx=c.kz=0;c.stun=0;burst(c.x,heightAt(c.z)+0.5,c.z,4)}return}
   if(c.tm){tileMove(c,dt);return}
@@ -743,16 +767,18 @@ function updChar(c,dt){
   if(ns.type==='tile'&&c.z>=ns.z0-0.7&&c.z<ns.z0+ns.len){c.z=ns.z0-0.7;if(c.stun<=0&&c.h===0){c.tm={seg:ns,r:-1,c:-1,last:null,q:null}}}
   // 안전장치: 7초 넘게 제자리면 폴짝 넘어가기
   if(c.best==null||c.z>c.best+0.3){c.best=c.z;c.bestT=G.time}
-  else if(G.time-c.bestT>7){c.bestT=G.time;c.best=c.z;if(seg.type==='door'){var sw=nextWall(seg,c);if(sw&&sw.z-c.z<3){c.passed[sw.id]=1;c.z=Math.max(c.z,sw.z-0.4)}}c.stun=0;c.vy=8;c.h=0.01;c.inv=1}
-  if(c.z>=G.fz&&!c.rank){c.rank=++G.finished;c.stun=0;c.finT=G.time;c.vy=6;c.h=0.01;c.jumpT=0.7;burst(c.x,heightAt(c.z)+1,c.z,c.rank<=G.winners?10:3);if(c.rank<=G.winners)sfx('fin',c);onFinish(c)}
+  else if(G.time-c.bestT>7){c.bestT=G.time;c.best=c.z;if(seg.type==='door'&&nextWall(seg,c)){var sw=nextWall(seg,c),bi=-1;sw.doors.forEach(function(d,di){if((d.open||d.real)&&(bi<0||Math.abs(d.cx-c.x)<Math.abs(sw.doors[bi].cx-c.x)))bi=di});if(bi>=0){c.door={w:sw.id,d:bi,sure:1}}c.stun=0}
+    else{c.stun=0;c.vy=8;c.h=0.01;c.inv=1}}
+  if(c.z>=G.fz&&!c.rank){c.rank=++G.finished;c.stun=0;c.finT=G.time;c.boost=0;c.slow=false;c.arr=false;if(c.rank===1&&G.tape&&!G.tape.cut){G.tape.cut=true;burst(0,heightAt(c.z)+0.8,c.z,10)}if(c.rank<=G.winners){c.vy=5;c.h=0.01}burst(c.x,heightAt(c.z)+1,c.z,c.rank<=G.winners?10:3);if(c.rank<=G.winners)sfx('fin',c);onFinish(c)}
 }
 function syncChar(c,dt){
   var fy=c.fall>0?heightAt(c.respawn+3):heightAt(c.z);
-  var run=G.started&&!c.rank&&c.stun<=0&&c.fall<=0;
+  var run=G.started&&(!c.rank||!c.arr)&&c.stun<=0&&c.fall<=0;
   if(run&&!c.tm){c.ph+=dt*13*c.mult;c.hy=c.h>0?0:Math.abs(Math.sin(c.ph))*0.1}
   var wp=toW(c.x,c.z);c.g.position.set(wp.X,fy+c.h+(c.hy||0),wp.Z);c.g.rotation.y=c.face+wp.a;c.wx=wp.X;c.wz=wp.Z;
   var bs=c.boost>0?1.12:(c.slow?0.82:1);c.b.scale.set(1/bs,bs,1/bs);
-  if(c.stun>0||c.fall>0){c.b.rotation.x+=dt*11}else{c.b.rotation.x+=((run?0.14:0)-c.b.rotation.x)*Math.min(1,dt*10);if(Math.abs(c.b.rotation.x)>PI)c.b.rotation.x%=(2*PI)}
+  if(c.spin>0){c.spin-=dt*1.6;c.b.rotation.y=(1-Math.max(0,c.spin))*PI*2}else c.b.rotation.y=0;
+  if(c.stun>0||c.fall>0){c.b.rotation.x+=dt*11}else{c.b.rotation.x+=((run?0.14:(c.arr&&c.rank>G.winners?0.1+Math.sin(c.ph)*0.06:0))-c.b.rotation.x)*Math.min(1,dt*10);if(Math.abs(c.b.rotation.x)>PI)c.b.rotation.x%=(2*PI)}
   var a=Math.sin(c.ph)*0.16*(run?1:0);c.feet[0].position.z=0.03+a;c.feet[1].position.z=0.03-a;c.feet[0].position.y=0.08+Math.max(0,a)*0.5;c.feet[1].position.y=0.08+Math.max(0,-a)*0.5;
   c.shadow.visible=c.fall<=0&&!(c.tm&&false);c.shadow.position.set(wp.X,fy+0.03,wp.Z);var ss=1/(1+c.h*0.5);c.shadow.scale.set(ss,ss,ss);
   c.ring.visible=G.follow===c;if(c.ring.visible)c.ring.rotation.z+=dt*2;
@@ -766,7 +792,7 @@ function separate(){
 function step(dt){
   G.time+=dt;
   G.segs.forEach(function(s){if(s.type==='spin')updSpin(s,dt);else if(s.type==='door')updDoor(s,dt);else if(s.type==='hill')updHill(s,dt);else if(s.type==='tile')updTile(s,dt);else if(s.type==='swing')updSwing(s,dt)});
-  G.segs.forEach(function(sg){updHaz(sg,dt)});updParts(dt);updCps(dt);
+  G.segs.forEach(function(sg){updHaz(sg,dt)});updParts(dt);updCps(dt);updShards(dt);updTape(dt);
   if(G.started){G.chars.forEach(function(c){updChar(c,dt)});separate()}
 }
 var camP=new THREE.Vector3(0,10,-14),camL=new THREE.Vector3(0,0,6),tv=new THREE.Vector3();
